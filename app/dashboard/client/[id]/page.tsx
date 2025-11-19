@@ -5,12 +5,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import { apiClient } from '@/lib/api/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { PortfolioSummaryCards } from '@/components/portfolio-summary-cards';
+import { ArrowLeft, Loader2, TrendingUp, PieChart, List, BarChart } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs-premium';
+import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
+import { PerformanceAnalysis } from '@/components/analysis/performance-analysis';
+import { AllocationAnalysis } from '@/components/analysis/allocation-analysis';
+import { HoldingsAnalysis } from '@/components/analysis/holdings-analysis';
 import { PortfolioCharts } from '@/components/portfolio-charts';
-import { PortfolioTable } from '@/components/portfolio-table';
-import type { PortfolioPosition, PortfolioSummary } from '@/lib/types/portfolio';
+import PortfolioInvestorProfile from '@/components/portfolio-investor-profile';
+import PortfolioScore from '@/components/portfolio-score';
+import PortfolioAlerts from '@/components/portfolio-alerts';
+import type { PortfolioPosition, PortfolioSummary, ScoreAlert } from '@/lib/types/portfolio';
 
 interface Client {
   id: string;
@@ -20,7 +27,7 @@ interface Client {
   investor_profile: string;
 }
 
-export default function ClientDetailPage() {
+export default function ClientDetailPremiumPage() {
   const params = useParams();
   const router = useRouter();
   const clientId = params.id as string;
@@ -28,7 +35,10 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [positions, setPositions] = useState<PortfolioPosition[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+  const [portfolioId, setPortfolioId] = useState<string | null>(null);
+  const [scoreAlerts, setScoreAlerts] = useState<ScoreAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('vue-ensemble');
   const supabase = createClient();
 
   useEffect(() => {
@@ -59,51 +69,37 @@ export default function ClientDetailPage() {
 
       if (portfolioError && portfolioError.code !== 'PGRST116') throw portfolioError;
 
-      // Charger les positions
+      // Charger les positions enrichies depuis l'API backend
       if (portfolioData) {
-        const { data: positionsData, error: positionsError } = await supabase
-          .from('positions')
-          .select('*')
-          .eq('portfolio_id', portfolioData.id)
-          .order('current_value', { ascending: false });
+        setPortfolioId(portfolioData.id);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          throw new Error('Session expirée');
+        }
 
-        if (positionsError) throw positionsError;
-
-        // Convertir en format PortfolioPosition
-        const portfolioPositions: PortfolioPosition[] = (positionsData || []).map(p => ({
-          date: new Date().toISOString().split('T')[0],
-          provider: 'Portfolio',
-          asset_class: p.category,
-          instrument_name: p.security_name,
-          isin: p.isin,
-          region: p.isin?.startsWith('FR') ? 'France' : 
-                  p.isin?.startsWith('LU') ? 'Luxembourg' :
-                  p.isin?.startsWith('US') ? 'USA' : 'Autre',
-          currency: 'EUR',
-          current_value: p.current_value,
-        }));
+        const portfolioPositions = await apiClient.getPortfolioPositions(
+          portfolioData.id,
+          session.access_token
+        );
 
         setPositions(portfolioPositions);
 
         // Calculer le summary
         const totalValue = portfolioPositions.reduce((sum, p) => sum + p.current_value, 0);
 
-        // Répartition par catégorie (asset_class)
         const byAssetClass = portfolioPositions.reduce((acc: Record<string, number>, p) => {
           acc[p.asset_class] = (acc[p.asset_class] || 0) + p.current_value;
           return acc;
         }, {});
 
-        // Répartition par région
         const byRegion = portfolioPositions.reduce((acc: Record<string, number>, p) => {
           acc[p.region] = (acc[p.region] || 0) + p.current_value;
           return acc;
         }, {});
 
-        // Répartition par provider (fixe pour l'instant)
         const byProvider = { 'Portfolio': totalValue };
 
-        // Données temporelles simulées (on prendra les snapshots plus tard)
         const timeSeriesData = [
           { date: new Date(Date.now() - 5 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], value: totalValue * 0.92 },
           { date: new Date(Date.now() - 4 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], value: totalValue * 0.95 },
@@ -133,8 +129,11 @@ export default function ClientDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-navy-900">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-royal-500 mx-auto" />
+          <p className="text-muted-foreground">Chargement du portefeuille...</p>
+        </div>
       </div>
     );
   }
@@ -147,57 +146,167 @@ export default function ClientDetailPage() {
     );
   }
 
+  const totalValue = summary?.totalValue || 0;
+  const avgPerformance = positions.length > 0 
+    ? positions.reduce((sum, p) => {
+        const weight = p.current_value / totalValue;
+        return sum + (p.asset?.perf_1y || 0) * weight;
+      }, 0)
+    : 0;
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/dashboard')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour au dashboard
-        </Button>
-
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            {client.first_name}
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            {client.email || 'Pas d\'email'} • Profil {client.investor_profile}
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Dashboard content - only show if data is loaded */}
-      {summary && positions.length > 0 ? (
-        <div className="space-y-8">
-          {/* Summary cards */}
-          <PortfolioSummaryCards summary={summary} />
-
-          {/* Charts */}
-          <PortfolioCharts summary={summary} />
-
-          {/* Table */}
-          <PortfolioTable positions={positions} />
-        </div>
-      ) : (
+    <div className="min-h-screen bg-navy-950">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-center py-20"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
         >
-          <h3 className="text-xl font-semibold mb-2">Aucun portefeuille</h3>
-          <p className="text-muted-foreground">
-            Ce client n'a pas encore de portefeuille
-          </p>
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/dashboard')}
+            className="mb-6 hover:bg-white/5"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Retour au dashboard
+          </Button>
+
+          <div className="flex items-start justify-between mb-8">
+            <div>
+              <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                {client.first_name} {client.last_name}
+              </h1>
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <span>{client.email || 'Pas d\'email'}</span>
+                <span>•</span>
+                <span className="px-3 py-1 rounded-full bg-royal-500/10 text-royal-400 text-sm font-medium">
+                  Profil {client.investor_profile}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile / Score / Alerts */}
+          {portfolioId && (
+            <div className="grid gap-6 md:grid-cols-3 mb-8">
+              <PortfolioInvestorProfile portfolioId={portfolioId} onUpdated={loadClientData} />
+              <PortfolioScore portfolioId={portfolioId} onAlerts={(alerts) => setScoreAlerts(alerts)} />
+              <PortfolioAlerts alerts={scoreAlerts} portfolioId={portfolioId} />
+            </div>
+          )}
+
+          {/* Summary KPIs */}
+          {summary && positions.length > 0 && (
+            <MetricGrid cols={4}>
+              <MetricCard
+                title="Valeur Totale"
+                value={totalValue}
+                type="currency"
+                trend={avgPerformance}
+                icon={<TrendingUp className="w-5 h-5" />}
+                variant="premium"
+              />
+              <MetricCard
+                title="Performance Moyenne"
+                value={avgPerformance}
+                type="percentage"
+                trend={avgPerformance}
+                icon={<BarChart className="w-5 h-5" />}
+                variant="premium"
+              />
+              <MetricCard
+                title="Nombre d'Actifs"
+                value={positions.length}
+                type="number"
+                icon={<List className="w-5 h-5" />}
+                subtitle={`${Object.keys(summary.byAssetClass).length} classes`}
+                variant="premium"
+              />
+              <MetricCard
+                title="Diversification"
+                value={Object.keys(summary.byRegion).length}
+                type="number"
+                icon={<PieChart className="w-5 h-5" />}
+                subtitle="régions"
+                variant="premium"
+              />
+            </MetricGrid>
+          )}
         </motion.div>
-      )}
+
+        {/* Dashboard Content with Tabs */}
+        {summary && positions.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="vue-ensemble" className="gap-2">
+                  <BarChart className="w-4 h-4" />
+                  Vue d'ensemble
+                </TabsTrigger>
+                <TabsTrigger value="performance" className="gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Performance
+                </TabsTrigger>
+                <TabsTrigger value="allocation" className="gap-2">
+                  <PieChart className="w-4 h-4" />
+                  Allocation
+                </TabsTrigger>
+                <TabsTrigger value="holdings" className="gap-2">
+                  <List className="w-4 h-4" />
+                  Positions
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="vue-ensemble" className="space-y-6">
+                <PortfolioCharts summary={summary} />
+              </TabsContent>
+
+              <TabsContent value="performance">
+                <PerformanceAnalysis 
+                  positions={positions} 
+                  totalValue={totalValue} 
+                />
+              </TabsContent>
+
+              <TabsContent value="allocation">
+                <AllocationAnalysis 
+                  positions={positions}
+                  totalValue={totalValue}
+                  byAssetClass={summary.byAssetClass}
+                  byRegion={summary.byRegion}
+                />
+              </TabsContent>
+
+              <TabsContent value="holdings">
+                <HoldingsAnalysis 
+                  positions={positions}
+                  totalValue={totalValue}
+                />
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-center py-20"
+          >
+            <div className="glass-effect p-12 rounded-2xl inline-block">
+              <h3 className="text-2xl font-semibold mb-2">Aucun portefeuille</h3>
+              <p className="text-muted-foreground">
+                Ce client n'a pas encore de portefeuille
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

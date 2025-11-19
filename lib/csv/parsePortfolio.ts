@@ -1,9 +1,23 @@
 import Papa from 'papaparse';
-import type { PortfolioPosition, PortfolioSummary, ParseError } from '@/lib/types/portfolio';
+import type { PortfolioSummary, ParseError } from '@/lib/types/portfolio';
+
+// Type for parsed positions coming from the CSV (client-side). The full
+// PortfolioPosition type includes DB fields (id, timestamps, portfolio_id)
+// which are not available at CSV import time, so we use a lighter shape here.
+type ParsedPosition = {
+  date: string;
+  provider: string;
+  asset_class: string;
+  instrument_name: string;
+  isin?: string;
+  region: string;
+  currency: string;
+  current_value: number;
+};
 
 interface ParseResult {
   success: boolean;
-  data?: PortfolioPosition[];
+  data?: ParsedPosition[];
   summary?: PortfolioSummary;
   errors: ParseError[];
 }
@@ -21,7 +35,7 @@ export async function parsePortfolioCSV(file: File): Promise<ParseResult> {
       skipEmptyLines: true,
       dynamicTyping: false, // On parse nous-mêmes pour mieux gérer les erreurs
       complete: (results) => {
-        const positions: PortfolioPosition[] = [];
+  const positions: ParsedPosition[] = [];
 
         // Colonnes requises
         const requiredColumns = ['date', 'provider', 'asset_class', 'instrument_name', 'region', 'currency', 'current_value'];
@@ -108,7 +122,7 @@ export async function parsePortfolioCSV(file: File): Promise<ParseResult> {
 /**
  * Génère un résumé agrégé à partir des positions
  */
-function generateSummary(positions: PortfolioPosition[]): PortfolioSummary {
+function generateSummary(positions: ParsedPosition[]): PortfolioSummary {
   const byProvider: Record<string, number> = {};
   const byAssetClass: Record<string, number> = {};
   const byRegion: Record<string, number> = {};

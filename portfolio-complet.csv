@@ -1,0 +1,31 @@
+date,provider,asset_class,instrument_name,isin,region,currency,current_value,quantity,purchase_price
+2024-11-19,Boursorama,etf,Amundi CAC 40 UCITS ETF,FR0013380607,europe,EUR,12500.00,150,83.33
+2024-11-19,Boursorama,etf,Lyxor MSCI World UCITS ETF,FR0010315770,usa,EUR,25600.00,200,128.00
+2024-11-19,Boursorama,etf,iShares Core MSCI Europe UCITS ETF,IE00B4K48X80,europe,EUR,18900.00,300,63.00
+2024-11-19,Fortuneo,action,Apple Inc,US0378331005,usa,EUR,45000.00,250,180.00
+2024-11-19,Fortuneo,action,Microsoft Corporation,US5949181045,usa,EUR,38000.00,100,380.00
+2024-11-19,Fortuneo,action,LVMH Moët Hennessy Louis Vuitton SE,FR0000121014,europe,EUR,32500.00,50,650.00
+2024-11-19,BforBank,etf,Amundi MSCI Emerging Markets UCITS ETF,FR0013412020,pays_emergents,EUR,15400.00,200,77.00
+2024-11-19,BforBank,etf,Lyxor Euro Government Bond UCITS ETF,FR0007080973,europe,EUR,21000.00,200,105.00
+2024-11-19,BforBank,action,ASML Holding NV,NL0010273215,europe,EUR,28000.00,40,700.00
+2024-11-19,Trade Republic,action,Tesla Inc,US88160R1014,usa,EUR,22000.00,100,220.00
+2024-11-19,Trade Republic,action,NVIDIA Corporation,US67066G1040,usa,EUR,48000.00,120,400.00
+2024-11-19,Trade Republic,action,Alphabet Inc Class A,US02079K3059,usa,EUR,15000.00,100,150.00
+2024-11-19,Saxo Bank,etf,Vanguard S&P 500 UCITS ETF,IE00B3XXRP09,usa,EUR,42000.00,500,84.00
+2024-11-19,Saxo Bank,action,TotalEnergies SE,FR0000120271,europe,EUR,19500.00,300,65.00
+2024-11-19,Saxo Bank,action,Schneider Electric SE,FR0000121972,europe,EUR,24000.00,150,160.00
+2024-11-19,Interactive Brokers,etf,iShares MSCI Japan UCITS ETF,IE00B02KXK85,asie_pacifique,EUR,16800.00,400,42.00
+2024-11-19,Interactive Brokers,action,Amazon.com Inc,US0231351067,usa,EUR,35000.00,200,175.00
+2024-11-19,Interactive Brokers,action,Airbus SE,NL0000235190,europe,EUR,26500.00,200,132.50
+2024-11-19,Degiro,etf,Amundi MSCI USA UCITS ETF,LU1681043599,usa,EUR,31000.00,300,103.33
+2024-11-19,Degiro,action,SAP SE,DE0007164600,europe,EUR,18500.00,100,185.00
+2024-11-19,Degiro,action,Samsung Electronics Co Ltd,KR7005930003,asie_pacifique,EUR,12000.00,200,60.00
+2024-11-19,Linxea,etf,Lyxor STOXX Europe 600 Technology UCITS ETF,LU1834988278,europe,EUR,14500.00,250,58.00
+2024-11-19,Linxea,action,Hermès International SCA,FR0000052292,europe,EUR,42000.00,20,2100.00
+2024-11-19,Linxea,action,Sanofi SA,FR0000120578,europe,EUR,16000.00,160,100.00
+2024-11-19,Yomoni,etf,iShares Core S&P 500 UCITS ETF,IE00B5BMR087,usa,EUR,28500.00,300,95.00
+2024-11-19,Yomoni,etf,Xtrackers MSCI China UCITS ETF,LU0514695690,chine,EUR,8500.00,200,42.50
+2024-11-19,Yomoni,obligation,OAT France 10Y,FR0014001NN4,europe,EUR,25000.00,250,100.00
+2024-11-19,Nalo,etf,iShares MSCI World Small Cap UCITS ETF,IE00BF4RFH31,usa,EUR,12000.00,300,40.00
+2024-11-19,Nalo,etf,Amundi MSCI Nordic UCITS ETF,LU1681044720,europe,EUR,9500.00,200,47.50
+2024-11-19,Nalo,immobilier,Unibail-Rodamco-Westfield SE,FR0013326246,europe,EUR,8000.00,100,80.00
