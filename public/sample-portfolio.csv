@@ -1,0 +1,25 @@
+date,provider,asset_class,instrument_name,isin,region,currency,current_value
+2024-01-15,Boursorama,Action,Apple Inc.,US0378331005,USA,EUR,4500.00
+2024-01-15,Boursorama,Action,LVMH Moët Hennessy,FR0000121014,Europe,EUR,3200.00
+2024-02-20,BNP Paribas,ETF,iShares MSCI World,IE00B4L5Y983,Autres,EUR,8500.00
+2024-02-20,BNP Paribas,Obligation,OAT France 2035,FR0013257524,Europe,EUR,5000.00
+2024-03-10,Trade Republic,Action,Tesla Inc.,US88160R1014,USA,EUR,2800.00
+2024-03-10,Trade Republic,ETF,Vanguard S&P 500,IE00B3XXRP09,USA,EUR,12000.00
+2024-04-05,Boursorama,Action,ASML Holding,NL0010273215,Europe,EUR,6500.00
+2024-04-05,Boursorama,Action,TotalEnergies,FR0000120271,Europe,EUR,4200.00
+2024-05-12,BNP Paribas,Fonds euro,Fonds Eurossima,FR0007034902,Europe,EUR,15000.00
+2024-05-12,BNP Paribas,Action,Alibaba Group,US01609W1027,Chine,EUR,3500.00
+2024-06-08,Trade Republic,Action,Microsoft Corporation,US5949181045,USA,EUR,7200.00
+2024-06-08,Trade Republic,ETF,Amundi MSCI Emerging Markets,LU1681045370,Pays émergents,EUR,5500.00
+2024-07-15,Boursorama,Action,Hermès International,FR0000052292,Europe,EUR,9800.00
+2024-07-15,Boursorama,Cash,Livret A,N/A,Europe,EUR,25000.00
+2024-08-22,BNP Paribas,Action,Nvidia Corporation,US67066G1040,USA,EUR,8900.00
+2024-08-22,BNP Paribas,ETF,Lyxor STOXX Europe 600,LU0908500753,Europe,EUR,6700.00
+2024-09-10,Trade Republic,Action,Tencent Holdings,KYG875721634,Chine,EUR,4100.00
+2024-09-10,Trade Republic,Action,Airbus SE,NL0000235190,Europe,EUR,5300.00
+2024-10-05,Boursorama,Action,Amazon.com Inc.,US0231351067,USA,EUR,11200.00
+2024-10-05,Boursorama,Obligation,Corporate Bond Apple,US037833AK68,USA,EUR,7500.00
+2024-11-01,BNP Paribas,Action,Schneider Electric,FR0000121972,Europe,EUR,4800.00
+2024-11-01,BNP Paribas,ETF,iShares MSCI China,IE00BJ5JPG56,Chine,EUR,3900.00
+2024-11-19,Trade Republic,Action,Alphabet Inc.,US02079K3059,USA,EUR,6800.00
+2024-11-19,Trade Republic,ETF,Amundi CAC 40,FR0007080973,Europe,EUR,8200.00
