@@ -12,23 +12,13 @@ import { UserPlus, Loader2 } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation du mot de passe
-    if (password !== confirmPassword) {
-      toast.error('Erreur', {
-        description: 'Les mots de passe ne correspondent pas'
-      });
-      return;
-    }
 
     if (password.length < 6) {
       toast.error('Erreur', {
@@ -45,9 +35,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
+          emailRedirectTo: undefined,
         },
       });
 
@@ -59,23 +47,6 @@ export default function SignupPage() {
       }
 
       if (authData.user) {
-        // Créer le profil utilisateur dans la table public.users
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: email,
-              full_name: fullName,
-              role: 'advisor', // Rôle par défaut
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Erreur création profil:', profileError);
-          // On continue quand même, le profil peut être créé via trigger
-        }
-
         toast.success('Inscription réussie !', {
           description: 'Votre compte a été créé avec succès'
         });
@@ -115,21 +86,6 @@ export default function SignupPage() {
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="fullName" className="text-sm font-medium">
-                  Nom complet
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  placeholder="Jean Dupont"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
                   Email
                 </label>
@@ -161,22 +117,6 @@ export default function SignupPage() {
                 <p className="text-xs text-muted-foreground">
                   Minimum 6 caractères
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-medium">
-                  Confirmer le mot de passe
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                />
               </div>
 
               <Button
