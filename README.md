@@ -4,13 +4,34 @@ OneWealth est une web app destinée aux professionnels de l'investissement (CIF,
 
 ## 🚀 Démarrage rapide
 
+### Prérequis
+
+- Node.js 18+ installé
+- Un compte Supabase (gratuit)
+
 ### Installation
 
-Les dépendances sont déjà installées. Si besoin de réinstaller :
-
 ```bash
+# Cloner le projet
+git clone https://github.com/AlexandreLkhaoua/one-wealth.git
+cd one-wealth
+
+# Installer les dépendances
 npm install
+
+# Configurer Supabase (voir SUPABASE_SETUP.md)
+cp .env.local.example .env.local
+# Éditer .env.local avec tes clés Supabase
 ```
+
+### Configuration Supabase
+
+**📖 Guide détaillé dans [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md)**
+
+1. Crée un projet sur [supabase.com](https://supabase.com)
+2. Exécute le script SQL : `supabase-schema.sql` dans l'éditeur SQL
+3. Configure les variables d'environnement dans `.env.local`
+4. Lance l'application !
 
 ### Lancer l'application en développement
 
@@ -106,12 +127,20 @@ date,provider,asset_class,instrument_name,isin,region,currency,current_value
 
 ## 🎨 Fonctionnalités principales
 
-### Landing Page
+### 🔐 Authentification
+- Inscription par email/mot de passe
+- Connexion sécurisée
+- Session persistante
+- Déconnexion
+- Protection des routes privées (middleware)
+- Profil utilisateur dans Supabase
+
+### 🏠 Landing Page
 - Hero avec titre et description
 - Section "Pour qui ?" avec 3 cartes
 - CTA vers le dashboard
 
-### Dashboard
+### 📊 Dashboard
 - Upload de fichier CSV (drag & drop ou sélection)
 - Validation du format et de la taille
 - Parsing côté client avec gestion d'erreurs
@@ -119,6 +148,21 @@ date,provider,asset_class,instrument_name,isin,region,currency,current_value
 - Graphique d'évolution temporelle de la valeur
 - Graphique de répartition géographique (pie chart)
 - Tableau détaillé de toutes les positions
+
+## 🗄️ Base de données (Supabase)
+
+### Tables créées
+- **users** - Profils des conseillers
+- **clients** - Clients gérés
+- **portfolios** - Portefeuilles
+- **positions** - Positions individuelles
+- **portfolio_snapshots** - Historique
+- **csv_imports** - Traçabilité
+
+### Sécurité
+- Row Level Security (RLS) activé
+- Policies d'accès par utilisateur
+- Cascade deletes automatiques
 
 ## 🧹 Notes importantes
 

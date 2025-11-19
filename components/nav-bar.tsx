@@ -1,15 +1,60 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+import { LogOut, User, LogIn } from 'lucide-react';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export function NavBar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Récupérer l'utilisateur actuel
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setIsLoading(false);
+    };
+
+    getUser();
+
+    // Écouter les changements d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      toast.error('Erreur de déconnexion', {
+        description: error.message
+      });
+      return;
+    }
+
+    toast.success('Déconnecté', {
+      description: 'À bientôt !'
+    });
+    router.push('/');
+    router.refresh();
+  };
 
   const links = [
     { href: '/', label: 'Accueil' },
-    { href: '/dashboard', label: 'Dashboard' }
+    { href: '/dashboard', label: 'Dashboard', protected: true }
   ];
 
   return (
@@ -29,8 +74,11 @@ export function NavBar() {
         </Link>
 
         {/* Navigation links */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-2">
           {links.map((link) => {
+            // Masquer les liens protégés si non connecté
+            if (link.protected && !user) return null;
+            
             const isActive = pathname === link.href;
             return (
               <Link
@@ -48,6 +96,45 @@ export function NavBar() {
               </Link>
             );
           })}
+
+          {/* User section */}
+          {!isLoading && (
+            <>
+              {user ? (
+                <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-border">
+                  <div className="flex items-center space-x-2 px-3 py-1 rounded-md bg-secondary/50">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      {user.email?.split('@')[0]}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Déconnexion
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-border">
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Connexion
+                    </Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button size="sm">
+                      S'inscrire
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </motion.nav>
