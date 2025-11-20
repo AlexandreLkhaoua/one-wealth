@@ -29,15 +29,6 @@ export function PortfolioSummaryCards({ summary }: PortfolioSummaryCardsProps) {
       percentage: (value / summary.totalValue) * 100
     }));
 
-  const topAssetClasses = Object.entries(summary.byAssetClass)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([name, value]) => ({
-      name,
-      value,
-      percentage: (value / summary.totalValue) * 100
-    }));
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',

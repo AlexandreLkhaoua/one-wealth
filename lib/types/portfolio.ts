@@ -51,25 +51,42 @@ export interface ParseError {
   message: string;
 }
 
+// Sprint 2: Scoring types
 export interface SubScore {
   name: string;
   value: number; // 0-100
-  comment?: string;
+  description: string;
 }
 
-export interface ScoreAlert {
-  level: 'red' | 'orange' | 'green';
+export type AlertSeverity = 'red' | 'orange' | 'green';
+
+export interface Alert {
   code: string;
+  severity: AlertSeverity;
   message: string;
-  detail?: string;
+  recommendation?: string;
 }
 
 export interface PortfolioScoreResult {
-  portfolio_id: string;
   global_score: number;
   sub_scores: SubScore[];
-  alerts: ScoreAlert[];
+  alerts: Alert[];
+  investor_profile: string;
+  actual_equity_pct: number;
+  concentration_top5: number;
+}
+
+// Sprint 2: Profile types
+export interface InvestorProfileResponse {
+  investor_profile: string;
+  target_equity_pct: number;
+  investment_horizon_years: number;
+  objective: string;
+}
+
+export interface InvestorProfileUpdate {
   investor_profile?: string;
   target_equity_pct?: number;
-  actual_equity_pct?: number;
+  investment_horizon_years?: number;
+  objective?: string;
 }

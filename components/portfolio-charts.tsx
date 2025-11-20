@@ -2,11 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card-premium';
-import { AnimatedNumber, AnimatedCurrency } from '@/components/ui/animated-number';
+import { AnimatedCurrency } from '@/components/ui/animated-number';
 import { Badge } from '@/components/ui/badge-premium';
 import {
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -14,7 +12,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   AreaChart,
   Area
@@ -38,6 +35,69 @@ const COLORS = [
   '#EF4444', // Red
   '#06B6D4', // Cyan
 ];
+
+// Tooltip custom déplacé hors du composant principal pour éviter les re-renders
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-effect-strong rounded-xl p-4 shadow-premium border border-royal-500/20"
+      >
+        <p className="font-semibold text-white mb-2">{data.date}</p>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm text-gray-400">Valeur</span>
+            <span className="text-sm font-bold text-royal-400">
+              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.value)}
+            </span>
+          </div>
+          {data.change !== undefined && Math.abs(data.change) > 0.01 && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm text-gray-400">Variation</span>
+              <span className={`text-sm font-semibold ${data.change >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+                {data.change >= 0 ? '+' : ''}{data.change.toFixed(2)}%
+              </span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+  return null;
+};
+
+const CustomPieTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-effect-strong rounded-xl p-4 shadow-premium border border-royal-500/20"
+      >
+        <p className="font-semibold text-white mb-2">{data.name}</p>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm text-gray-400">Valeur</span>
+            <span className="text-sm font-bold text-royal-400">
+              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.value)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm text-gray-400">Proportion</span>
+            <span className="text-sm font-semibold text-white">
+              {data.percentage.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+  return null;
+};
 
 export function PortfolioCharts({ summary }: PortfolioChartsProps) {
   // Calculs de performance
@@ -101,69 +161,6 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
       return `${(value / 1000).toFixed(0)}k €`;
     }
     return formatCurrency(value);
-  };
-
-  // Tooltips premium avec animations
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-effect-strong rounded-xl p-4 shadow-premium border border-royal-500/20"
-        >
-          <p className="font-semibold text-white mb-2">{data.date}</p>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-gray-400">Valeur</span>
-              <span className="text-sm font-bold text-royal-400">
-                {formatCurrency(data.value)}
-              </span>
-            </div>
-            {data.change !== undefined && Math.abs(data.change) > 0.01 && (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-sm text-gray-400">Variation</span>
-                <span className={`text-sm font-semibold ${data.change >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
-                  {data.change >= 0 ? '+' : ''}{data.change.toFixed(2)}%
-                </span>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      );
-    }
-    return null;
-  };
-
-  const CustomPieTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-effect-strong rounded-xl p-4 shadow-premium border border-royal-500/20"
-        >
-          <p className="font-semibold text-white mb-2">{data.name}</p>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-gray-400">Valeur</span>
-              <span className="text-sm font-bold text-royal-400">
-                {formatCurrency(data.value)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-gray-400">Proportion</span>
-              <span className="text-sm font-semibold text-white">
-                {data.percentage.toFixed(1)}%
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      );
-    }
-    return null;
   };
 
   return (

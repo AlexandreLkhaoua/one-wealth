@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import CountUp from 'react-countup';
 import { cn } from '@/lib/utils';
 
@@ -23,15 +22,10 @@ export function AnimatedNumber({
   className,
   separator = ' ',
 }: AnimatedNumberProps) {
-  const prevValue = useRef(value);
-
-  useEffect(() => {
-    prevValue.current = value;
-  }, [value]);
-
+  // Utiliser preserveValue permet à CountUp de gérer automatiquement les valeurs précédentes
+  // sans nécessiter d'accès au ref pendant le render
   return (
     <CountUp
-      start={prevValue.current}
       end={value}
       duration={duration}
       decimals={decimals}

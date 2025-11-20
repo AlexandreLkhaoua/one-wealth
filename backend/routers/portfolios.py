@@ -13,6 +13,7 @@ import csv
 import io
 from datetime import datetime
 import logging
+from config import get_settings
 
 from utils.supabase_client import get_supabase
 from services.enrichment import get_market_data_service
@@ -411,32 +412,52 @@ async def enrich_portfolio(
 @router.get("/portfolios/{portfolio_id}/profile", response_model=InvestorProfileResponse)
 async def get_portfolio_profile_endpoint(
     portfolio_id: str,
+    request: Request,
     supabase = Depends(get_supabase_dependency)
 ):
-    """Return portfolio profile fields for the frontend."""
+    """Get portfolio investor profile fields.
+    
+    Returns the investor profile configuration including target equity allocation.
+    Performs ownership check if Bearer token provided.
+    """
     try:
-        portfolio = await get_portfolio_profile(supabase, portfolio_id)
+        # Extract user_id from Bearer token if provided
+        user_id = None
+        auth_header = request.headers.get('authorization')
+        if auth_header and auth_header.lower().startswith('bearer '):
+            token = auth_header.split(' ', 1)[1]
+            try:
+                user_resp = supabase.auth.get_user(token)
+                if isinstance(user_resp, dict) and 'user' in user_resp:
+                    user_obj = user_resp['user']
+                else:
+                    user_obj = getattr(user_resp, 'user', None)
+                
+                # Extract the actual user ID string from the user object
+                if user_obj:
+                    if isinstance(user_obj, dict):
+                        user_id = user_obj.get('id')
+                    elif hasattr(user_obj, 'id'):
+                        user_id = user_obj.id if isinstance(user_obj.id, str) else str(user_obj.id)
+                    else:
+                        user_id = None
+            except Exception as e:
+                logger.warning(f"Failed to resolve user from token: {e}")
+                pass  # Treat as anonymous if token invalid
+        
+        portfolio = await get_portfolio_profile(supabase, portfolio_id, user_id)
         if not portfolio:
             raise HTTPException(status_code=404, detail=f"Portfolio {portfolio_id} not found")
 
-        # Map DB enum to UI label
-        enum = portfolio.get('investor_profile')
-        label_map = {
-            'defensif': 'prudent',
-            'equilibre': 'equilibre',
-            'dynamique': 'dynamique'
-        }
-        label = label_map.get(enum, 'equilibre')
-
         return InvestorProfileResponse(
-            portfolio_id=portfolio_id,
-            investor_profile=enum,
-            label=label,
-            target_equity_pct=portfolio.get('target_equity_pct'),
-            investment_horizon_years=portfolio.get('investment_horizon_years'),
-            objective=portfolio.get('objective')
+            investor_profile=portfolio.get('investor_profile', 'equilibre'),
+            target_equity_pct=float(portfolio.get('target_equity_pct', 60.0)),
+            investment_horizon_years=int(portfolio.get('investment_horizon_years', 10)),
+            objective=portfolio.get('objective', 'croissance')
         )
 
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Forbidden")
     except HTTPException:
         raise
     except Exception as e:
@@ -448,35 +469,55 @@ async def get_portfolio_profile_endpoint(
 async def patch_portfolio_profile_endpoint(
     portfolio_id: str,
     payload: InvestorProfileUpdate,
+    request: Request,
     supabase = Depends(get_supabase_dependency)
 ):
-    """Update portfolio profile (label -> enum + target pct)"""
+    """Update portfolio investor profile fields.
+    
+    Updates the investor profile and/or target equity allocation.
+    Requires Bearer token for ownership verification.
+    """
     try:
+        # Extract user_id from Bearer token (required for updates)
+        user_id = None
+        auth_header = request.headers.get('authorization')
+        if auth_header and auth_header.lower().startswith('bearer '):
+            token = auth_header.split(' ', 1)[1]
+            try:
+                user_resp = supabase.auth.get_user(token)
+                if isinstance(user_resp, dict) and 'user' in user_resp:
+                    user_id = user_resp['user'].get('id')
+                else:
+                    user_id = getattr(user_resp, 'user', None)
+                    if user_id and isinstance(user_id, dict):
+                        user_id = user_id.get('id')
+            except Exception:
+                raise HTTPException(status_code=401, detail="Invalid or missing authentication token")
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
         updated = await update_portfolio_profile(
             supabase,
             portfolio_id,
-            payload.label,
-            payload.investment_horizon_years,
-            payload.objective
+            user_id,
+            investor_profile=payload.investor_profile,
+            target_equity_pct=payload.target_equity_pct,
+            investment_horizon_years=payload.investment_horizon_years,
+            objective=payload.objective
         )
-
-        enum = updated.get('investor_profile')
-        label_map = {
-            'defensif': 'prudent',
-            'equilibre': 'equilibre',
-            'dynamique': 'dynamique'
-        }
-        label = label_map.get(enum, payload.label)
 
         return InvestorProfileResponse(
-            portfolio_id=portfolio_id,
-            investor_profile=enum,
-            label=label,
-            target_equity_pct=updated.get('target_equity_pct'),
-            investment_horizon_years=updated.get('investment_horizon_years'),
-            objective=updated.get('objective')
+            investor_profile=updated.get('investor_profile', 'equilibre'),
+            target_equity_pct=float(updated.get('target_equity_pct', 60.0)),
+            investment_horizon_years=int(updated.get('investment_horizon_years', 10)),
+            objective=updated.get('objective', 'croissance')
         )
 
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
@@ -508,14 +549,22 @@ async def get_portfolio_score_endpoint(
                 user_resp = supabase.auth.get_user(token)
                 # handle sync/async client shapes
                 if isinstance(user_resp, dict) and 'user' in user_resp:
-                    user_id = user_resp['user'].get('id')
+                    user_obj = user_resp['user']
                 else:
                     # Some clients return an object with .user
-                    user_id = getattr(user_resp, 'user', None)
-                    if user_id and isinstance(user_id, dict):
-                        user_id = user_id.get('id')
-            except Exception:
+                    user_obj = getattr(user_resp, 'user', None)
+                
+                # Extract the actual user ID string from the user object
+                if user_obj:
+                    if isinstance(user_obj, dict):
+                        user_id = user_obj.get('id')
+                    elif hasattr(user_obj, 'id'):
+                        user_id = user_obj.id if isinstance(user_obj.id, str) else str(user_obj.id)
+                    else:
+                        user_id = None
+            except Exception as e:
                 # If user resolution fails, treat as anonymous (no user_id)
+                logger.warning(f"Failed to resolve user from token: {e}")
                 user_id = None
 
         # Fetch portfolio to check ownership
@@ -525,12 +574,17 @@ async def get_portfolio_score_endpoint(
 
         portfolio = presp.data[0]
 
-        if user_id:
+        settings = get_settings()
+        if user_id and not settings.SKIP_OWNERSHIP_CHECK:
             # resolve client owner
             client_resp = supabase.table('clients').select('user_id').eq('id', portfolio.get('client_id')).execute()
             client_user_id = client_resp.data[0].get('user_id') if client_resp and client_resp.data else None
+            logger.info(f"🔐 Ownership check: token user_id={user_id}, client user_id={client_user_id}")
             if client_user_id and client_user_id != user_id:
+                logger.warning(f"❌ Forbidden: user {user_id} tried to access portfolio owned by {client_user_id}")
                 raise HTTPException(status_code=403, detail='Forbidden')
+        elif settings.SKIP_OWNERSHIP_CHECK:
+            logger.warning(f"⚠️  SKIP_OWNERSHIP_CHECK=True - Allowing access without ownership validation (DEV ONLY!)")
 
         result = await compute_portfolio_score(portfolio_id, user_id or "")
         return result

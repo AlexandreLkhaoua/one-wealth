@@ -1,21 +1,20 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge-premium';
-
-import type { ScoreAlert } from '@/lib/types/portfolio';
+import type { Alert } from '@/lib/types/portfolio';
 
 interface Props {
-  alerts: ScoreAlert[];
+  alerts: Alert[];
   portfolioId?: string;
 }
 
 export default function PortfolioAlerts({ alerts, portfolioId }: Props) {
-  const important = alerts.filter(a => a.level === 'red' || a.level === 'orange').slice(0, 3);
+  // Filter important alerts (red and orange severity)
+  const important = alerts.filter(a => a.severity === 'red' || a.severity === 'orange').slice(0, 3);
 
-  const colorFor = (level: string) => {
-    if (level === 'red') return 'bg-red-600 text-white';
-    if (level === 'orange') return 'bg-amber-500 text-black';
+  const colorFor = (severity: string) => {
+    if (severity === 'red') return 'bg-red-600 text-white';
+    if (severity === 'orange') return 'bg-amber-500 text-black';
     return 'bg-emerald-500 text-white';
   };
 
@@ -25,16 +24,22 @@ export default function PortfolioAlerts({ alerts, portfolioId }: Props) {
         <CardTitle>Alertes IA</CardTitle>
       </CardHeader>
       <CardContent>
-        {important.length === 0 && <div className="text-sm text-muted-foreground">Aucune alerte majeure</div>}
+        {important.length === 0 && (
+          <div className="text-sm text-muted-foreground">Aucune alerte majeure</div>
+        )}
         <div className="space-y-3">
           {important.map((a) => (
             <div key={a.code} className="flex items-start gap-3">
               <div>
-                <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${colorFor(a.level)}`}>{a.level.toUpperCase()}</span>
+                <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${colorFor(a.severity)}`}>
+                  {a.severity.toUpperCase()}
+                </span>
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="font-semibold">{a.message}</div>
-                {a.detail && <div className="text-sm text-muted-foreground">{a.detail}</div>}
+                {a.recommendation && (
+                  <div className="text-sm text-muted-foreground mt-1">{a.recommendation}</div>
+                )}
               </div>
             </div>
           ))}

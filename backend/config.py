@@ -5,7 +5,7 @@ This module handles all environment variables and application settings
 using Pydantic Settings for type validation.
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, List
 from functools import lru_cache
 
@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     # =====================================================
     # SUPABASE CONFIGURATION
     # =====================================================
-    SUPABASE_URL: str
-    SUPABASE_KEY: str  # anon key
-    SUPABASE_SERVICE_ROLE_KEY: str  # service_role key (sensitive!)
+    SUPABASE_URL: str = "http://localhost:54321"  # Default for testing
+    SUPABASE_KEY: str = "test-anon-key"  # anon key
+    SUPABASE_SERVICE_ROLE_KEY: str = "test-service-role-key"  # service_role key (sensitive!)
     
     # =====================================================
     # API CONFIGURATION
@@ -69,14 +69,18 @@ class Settings(BaseSettings):
     # SECURITY
     # =====================================================
     SECRET_KEY: Optional[str] = None
+    # Skip ownership checks in development (DANGEROUS - dev only!)
+    SKIP_OWNERSHIP_CHECK: bool = True
     
     # =====================================================
     # PYDANTIC CONFIG
     # =====================================================
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore"
+    )
 
 
 @lru_cache()

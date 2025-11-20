@@ -16,7 +16,11 @@
 // TYPES
 // =====================================================
 
-import type { PortfolioScoreResult } from '../types/portfolio';
+import type { 
+  PortfolioScoreResult, 
+  InvestorProfileResponse, 
+  InvestorProfileUpdate 
+} from '../types/portfolio';
 
 export interface CSVImportError {
   row: number;
@@ -214,11 +218,16 @@ export class APIClient {
 
   /**
    * Get portfolio investor profile
+   * 
+   * @param portfolioId - Portfolio UUID
+   * @param accessToken - Supabase access token for authentication
+   * @returns Investor profile response with target equity %, horizon, and objective
+   * @throws Error if request fails
    */
   async getPortfolioProfile(
     portfolioId: string,
     accessToken: string
-  ): Promise<{ portfolio_id: string; investor_profile?: string; label?: string; target_equity_pct?: number; investment_horizon_years?: number; objective?: string }>{
+  ): Promise<InvestorProfileResponse> {
     const response = await fetch(`${this.baseURL}/api/portfolios/${portfolioId}/profile`, {
       method: 'GET',
       headers: {
@@ -236,13 +245,19 @@ export class APIClient {
   }
 
   /**
-   * Update portfolio profile (PATCH)
+   * Update portfolio investor profile
+   * 
+   * @param portfolioId - Portfolio UUID
+   * @param payload - Profile fields to update
+   * @param accessToken - Supabase access token for authentication
+   * @returns Updated profile response
+   * @throws Error if request fails
    */
   async updatePortfolioProfile(
     portfolioId: string,
-    payload: { label: string; investment_horizon_years?: number; objective?: string },
+    payload: InvestorProfileUpdate,
     accessToken: string
-  ) {
+  ): Promise<InvestorProfileResponse> {
     const response = await fetch(`${this.baseURL}/api/portfolios/${portfolioId}/profile`, {
       method: 'PATCH',
       headers: {

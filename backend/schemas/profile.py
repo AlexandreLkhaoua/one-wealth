@@ -8,15 +8,15 @@ from typing import Optional
 
 class InvestorProfileUpdate(BaseModel):
     """Payload for updating a portfolio's investor profile (MVP)."""
-    label: str = Field(..., description='"prudent" | "equilibre" | "dynamique"')
-    investment_horizon_years: Optional[int] = Field(None, description="Horizon in years")
-    objective: Optional[str] = Field(None, description="Free text objective")
+    investor_profile: Optional[str] = Field(None, description='"prudent" | "equilibre" | "dynamique" | "agressif"')
+    target_equity_pct: Optional[float] = Field(None, description="Custom target equity percentage (overrides profile default)", ge=0, le=100)
+    investment_horizon_years: Optional[int] = Field(None, description="Investment horizon in years", ge=1)
+    objective: Optional[str] = Field(None, description="Investment objective (e.g., 'croissance', 'revenu')")
 
 
 class InvestorProfileResponse(BaseModel):
-    portfolio_id: str
-    investor_profile: Optional[str]
-    label: Optional[str]
-    target_equity_pct: Optional[int]
-    investment_horizon_years: Optional[int]
-    objective: Optional[str]
+    """Response containing portfolio's investor profile fields."""
+    investor_profile: str
+    target_equity_pct: float
+    investment_horizon_years: int
+    objective: str

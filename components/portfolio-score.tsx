@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { apiClient } from '@/lib/api/client';
 import { createClient } from '@/lib/supabase/client';
-import type { PortfolioScoreResult, ScoreAlert } from '@/lib/types/portfolio';
-import { RadialBarChart, RadialBar, Tooltip, Legend } from 'recharts';
+import type { PortfolioScoreResult, Alert } from '@/lib/types/portfolio';
+import { RadialBarChart, RadialBar, Tooltip } from 'recharts';
 
 interface Props {
   portfolioId: string;
-  onAlerts?: (alerts: ScoreAlert[]) => void;
+  onAlerts?: (alerts: Alert[]) => void;
 }
 
 export default function PortfolioScore({ portfolioId, onAlerts }: Props) {
@@ -40,12 +40,6 @@ export default function PortfolioScore({ portfolioId, onAlerts }: Props) {
     load();
     return () => { mounted = false };
   }, [portfolioId, onAlerts]);
-
-  const gaugeColor = (v: number) => {
-    if (v < 40) return 'bg-red-500';
-    if (v < 70) return 'bg-amber-400';
-    return 'bg-emerald-500';
-  };
 
   const chartSize = 160;
 
@@ -90,11 +84,13 @@ export default function PortfolioScore({ portfolioId, onAlerts }: Props) {
             <div className="flex-1 space-y-3">
               {score.sub_scores.map((s) => (
                 <div key={s.name} className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <div className="font-medium capitalize">{s.name.replace('_', ' ')}</div>
-                    {s.comment && <div className="text-sm text-muted-foreground">{s.comment}</div>}
+                    {s.description && (
+                      <div className="text-sm text-muted-foreground">{s.description}</div>
+                    )}
                   </div>
-                  <div className="text-lg font-bold">{s.value}</div>
+                  <div className="text-lg font-bold ml-4">{s.value}</div>
                 </div>
               ))}
             </div>

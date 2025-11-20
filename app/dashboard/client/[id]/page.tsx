@@ -17,7 +17,7 @@ import { PortfolioCharts } from '@/components/portfolio-charts';
 import PortfolioInvestorProfile from '@/components/portfolio-investor-profile';
 import PortfolioScore from '@/components/portfolio-score';
 import PortfolioAlerts from '@/components/portfolio-alerts';
-import type { PortfolioPosition, PortfolioSummary, ScoreAlert } from '@/lib/types/portfolio';
+import type { PortfolioPosition, PortfolioSummary, Alert } from '@/lib/types/portfolio';
 
 interface Client {
   id: string;
@@ -36,7 +36,7 @@ export default function ClientDetailPremiumPage() {
   const [positions, setPositions] = useState<PortfolioPosition[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [portfolioId, setPortfolioId] = useState<string | null>(null);
-  const [scoreAlerts, setScoreAlerts] = useState<ScoreAlert[]>([]);
+  const [scoreAlerts, setScoreAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('vue-ensemble');
   const supabase = createClient();
@@ -233,6 +233,15 @@ export default function ClientDetailPremiumPage() {
                 variant="premium"
               />
             </MetricGrid>
+          )}
+
+          {/* Sprint 2: Profile / Score / Alerts */}
+          {portfolioId && (
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-3 mt-8">
+              <PortfolioInvestorProfile portfolioId={portfolioId} onUpdated={loadClientData} />
+              <PortfolioScore portfolioId={portfolioId} onAlerts={(alerts) => setScoreAlerts(alerts)} />
+              <PortfolioAlerts alerts={scoreAlerts} portfolioId={portfolioId} />
+            </div>
           )}
         </motion.div>
 

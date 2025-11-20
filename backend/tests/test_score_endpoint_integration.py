@@ -63,9 +63,16 @@ def test_score_endpoint_authorized(monkeypatch):
     # override dependency in router
     app.dependency_overrides[portfolios_router.get_supabase_dependency] = lambda: fake_supabase
 
-    # stub compute_portfolio_score to return simple payload
+    # stub compute_portfolio_score to return complete payload with all required fields
     async def fake_compute(pid, uid):
-        return {'portfolio_id': pid, 'global_score': 42, 'sub_scores': [], 'alerts': []}
+        return {
+            'global_score': 42,
+            'sub_scores': [],
+            'alerts': [],
+            'investor_profile': 'equilibre',
+            'actual_equity_pct': 50.0,
+            'concentration_top5': 30.0
+        }
 
     # monkeypatch the real compute function used by the router (routers imported the function)
     monkeypatch.setattr(portfolios_router, 'compute_portfolio_score', fake_compute)
@@ -74,7 +81,8 @@ def test_score_endpoint_authorized(monkeypatch):
     resp = client.get(f"/api/portfolios/{portfolio_id}/score", headers={"Authorization": "Bearer token"})
     assert resp.status_code == 200
     body = resp.json()
-    assert body['portfolio_id'] == portfolio_id
+    assert body['global_score'] == 42
+    assert body['investor_profile'] == 'equilibre'
 
 
 def test_score_endpoint_forbidden(monkeypatch):
