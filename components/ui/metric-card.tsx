@@ -60,7 +60,7 @@ export function MetricCard({
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           {icon && (
-            <div className="p-2 rounded-lg bg-royal-500/10 text-royal-500">
+            <div className="p-2 rounded-lg bg-[color:var(--chart-2)]/10 text-[color:var(--chart-2)]">
               {icon}
             </div>
           )}

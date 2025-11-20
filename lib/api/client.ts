@@ -98,6 +98,66 @@ export class APIClient {
   }
 
   /**
+   * Centralized helper to extract a readable error message from a non-OK Response
+   * and throw a proper Error. Defensive: handles JSON or plain-text bodies.
+   */
+  private async handleErrorResponse(response: Response, fallbackMessage?: string): Promise<never> {
+    // We attempt both JSON and raw text extraction and include both in logs so
+    // when the backend returns an empty JSON object or an empty body we still
+    // capture something useful for debugging.
+    let parsedJson: any = null;
+    let rawText: string | null = null;
+
+    try {
+      // clone response so we can attempt multiple reads safely
+      const cloned = response.clone();
+      parsedJson = await cloned.json().catch(() => null);
+    } catch (_e) {
+      parsedJson = null;
+    }
+
+    try {
+      rawText = await response.text();
+    } catch (_e) {
+      rawText = null;
+    }
+
+    // Build a server message for logs. Prefer structured JSON detail when available,
+    // otherwise fall back to raw text or the provided fallback.
+    let serverMessage = fallbackMessage || `Request failed with status ${response.status}`;
+    if (parsedJson && typeof parsedJson === 'object' && Object.keys(parsedJson).length > 0) {
+      serverMessage = String(parsedJson.detail ?? parsedJson.message ?? JSON.stringify(parsedJson));
+    } else if (rawText && rawText.trim().length > 0) {
+      serverMessage = rawText;
+    }
+
+    // Log a richer debug object — safe for dev environments. This keeps the
+    // thrown Error message sanitized while providing more data in console logs
+    // for developers (raw response, parsed JSON, status, URL).
+    try {
+      console.error('API error response', {
+        url: (response as any).url ?? undefined,
+        status: response.status,
+        statusText: response.statusText,
+        parsedJson,
+        rawText,
+        serverMessage,
+      });
+    } catch (_e) {
+      // Best-effort logging — don't crash the app while trying to log an error
+      console.error('API error response: status', response.status, 'serverMessage:', serverMessage);
+    }
+
+    // User-facing message should be helpful but not leak internal details.
+    const userMessage = fallbackMessage ? `${fallbackMessage} (status ${response.status})` : `Request failed (status ${response.status})`;
+    const err = new Error(userMessage || `Request failed with status ${response.status}`);
+    // Attach original server message for callers who want to inspect it programmatically
+    (err as any).serverMessage = serverMessage;
+    (err as any).raw = { parsedJson, rawText };
+    throw err;
+  }
+
+  /**
    * Import a CSV file into a portfolio
    * 
    * @param portfolioId - UUID of the target portfolio
@@ -111,6 +171,8 @@ export class APIClient {
     file: File,
     accessToken: string
   ): Promise<CSVImportResult> {
+    if (!portfolioId) throw new Error('Invalid portfolioId');
+    if (!accessToken) throw new Error('Missing access token');
     const formData = new FormData();
     formData.append('file', file);
 
@@ -126,10 +188,7 @@ export class APIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: 'Import failed'
-      }));
-      throw new Error(error.detail || `Import failed with status ${response.status}`);
+      await this.handleErrorResponse(response, 'Import failed');
     }
 
     return response.json();
@@ -147,6 +206,8 @@ export class APIClient {
     portfolioId: string,
     accessToken: string
   ): Promise<PositionEnriched[]> {
+    if (!portfolioId) throw new Error('Invalid portfolioId');
+    if (!accessToken) throw new Error('Missing access token');
     const response = await fetch(
       `${this.baseURL}/api/portfolios/${portfolioId}/positions`,
       {
@@ -159,10 +220,35 @@ export class APIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: 'Failed to fetch positions'
-      }));
-      throw new Error(error.detail || `Request failed with status ${response.status}`);
+      // Try to parse a helpful error message from the backend. The backend may
+      // return JSON ({detail: ...}) or plain text. Be defensive and stringify
+      // unknown shapes so the thrown Error always has a useful message.
+      let parsed: any = null;
+      try {
+        parsed = await response.json();
+      } catch (e) {
+        // Not JSON — try text
+        try {
+          const txt = await response.text();
+          parsed = txt;
+        } catch (_err) {
+          parsed = null;
+        }
+      }
+
+      let message = `Request failed with status ${response.status}`;
+      if (parsed) {
+        if (typeof parsed === 'string') {
+          message = parsed;
+        } else if (typeof parsed === 'object') {
+          // Prefer common keys
+          message = String(parsed.detail ?? parsed.message ?? JSON.stringify(parsed));
+        } else {
+          message = String(parsed);
+        }
+      }
+
+      throw new Error(message || `Request failed with status ${response.status}`);
     }
 
     return response.json();
@@ -180,6 +266,8 @@ export class APIClient {
     portfolioId: string,
     accessToken: string
   ): Promise<EnrichPortfolioResult> {
+    if (!portfolioId) throw new Error('Invalid portfolioId');
+    if (!accessToken) throw new Error('Missing access token');
     const response = await fetch(
       `${this.baseURL}/api/portfolios/${portfolioId}/enrich`,
       {
@@ -192,10 +280,7 @@ export class APIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        detail: 'Enrichment failed'
-      }));
-      throw new Error(error.detail || `Enrichment failed with status ${response.status}`);
+      await this.handleErrorResponse(response, 'Enrichment failed');
     }
 
     return response.json();
@@ -228,6 +313,8 @@ export class APIClient {
     portfolioId: string,
     accessToken: string
   ): Promise<InvestorProfileResponse> {
+    if (!portfolioId) throw new Error('Invalid portfolioId');
+    if (!accessToken) throw new Error('Missing access token');
     const response = await fetch(`${this.baseURL}/api/portfolios/${portfolioId}/profile`, {
       method: 'GET',
       headers: {
@@ -237,8 +324,7 @@ export class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Failed to fetch profile' }));
-      throw new Error(error.detail || `Request failed with status ${response.status}`);
+      await this.handleErrorResponse(response, 'Failed to fetch profile');
     }
 
     return response.json();
@@ -258,6 +344,8 @@ export class APIClient {
     payload: InvestorProfileUpdate,
     accessToken: string
   ): Promise<InvestorProfileResponse> {
+    if (!portfolioId) throw new Error('Invalid portfolioId');
+    if (!accessToken) throw new Error('Missing access token');
     const response = await fetch(`${this.baseURL}/api/portfolios/${portfolioId}/profile`, {
       method: 'PATCH',
       headers: {
@@ -268,8 +356,7 @@ export class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Failed to update profile' }));
-      throw new Error(error.detail || `Request failed with status ${response.status}`);
+      await this.handleErrorResponse(response, 'Failed to update profile');
     }
 
     return response.json();
@@ -282,6 +369,8 @@ export class APIClient {
     portfolioId: string,
     accessToken: string
   ): Promise<PortfolioScoreResult> {
+    if (!portfolioId) throw new Error('Invalid portfolioId');
+    if (!accessToken) throw new Error('Missing access token');
     const response = await fetch(`${this.baseURL}/api/portfolios/${portfolioId}/score`, {
       method: 'GET',
       headers: {
@@ -291,8 +380,7 @@ export class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Failed to fetch score' }));
-      throw new Error(error.detail || `Request failed with status ${response.status}`);
+      await this.handleErrorResponse(response, 'Failed to fetch score');
     }
 
     return response.json();

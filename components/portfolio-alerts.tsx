@@ -47,8 +47,9 @@ export default function PortfolioAlerts({ alerts, portfolioId }: Props) {
         {portfolioId && important.length > 0 && (
           <div className="mt-4 flex justify-end">
             <button
-              onClick={() => window.open(`/dashboard/client/${portfolioId}`, '_self')}
-              className="inline-flex items-center px-3 py-1.5 rounded bg-royal-500 text-white text-sm font-medium"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              aria-label="Voir le diagnostic"
+              className="inline-flex items-center px-3 py-1.5 rounded bg-[color:var(--chart-2)] text-white text-sm font-medium"
             >
               Voir le diagnostic
             </button>

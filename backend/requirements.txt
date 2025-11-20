@@ -6,8 +6,9 @@
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 
-# Database - Supabase client (version plus récente pour compatibilité)
-supabase>=2.7,<3.0
+# Database - Supabase client (pin to a known compatible release)
+# Pin to 2.24.0 which matches other supabase-* packages used in this project.
+supabase==2.24.0
 
 # Data validation
 pydantic==2.5.3
@@ -25,6 +26,10 @@ numpy==1.26.3
 
 # HTTP requests (géré automatiquement par supabase)
 # httpx sera installé via les dépendances de supabase
+
+# Ensure httpx is compatible with the supabase-auth/gotrue packages.
+# supabase-auth 2.24.x requires httpx>=0.26,<0.29
+httpx>=0.26,<0.29
 
 # Environment variables
 python-dotenv==1.0.0

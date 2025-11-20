@@ -34,6 +34,16 @@ def clamp_0_100(v: float) -> float:
     return max(0.0, min(100.0, float(v)))
 
 
+def _safe_float(val, default: float) -> float:
+    """Safe float conversion used for values coming from DB/payloads."""
+    try:
+        if val is None:
+            return float(default)
+        return float(val)
+    except (TypeError, ValueError):
+        return float(default)
+
+
 async def compute_portfolio_score(portfolio_id: str, user_id: str) -> PortfolioScoreResult:
     """Compute the portfolio score and alerts for a given portfolio.
     
@@ -93,8 +103,11 @@ async def compute_portfolio_score(portfolio_id: str, user_id: str) -> PortfolioS
     if not portfolio:
         raise ValueError(f"Portfolio {portfolio_id} not found")
 
-    investor_profile = portfolio.get('investor_profile', 'equilibre')
-    target_equity_pct = float(portfolio.get('target_equity_pct', 60.0))
+    # Use a safe fallback when the DB field exists but is NULL (portfolio.get(..., default)
+    # will return None if the key exists with a None value). The `or` fallback guarantees
+    # a string is provided to downstream logic.
+    investor_profile = (portfolio.get('investor_profile') or 'equilibre')
+    target_equity_pct = _safe_float(portfolio.get('target_equity_pct'), 60.0)
 
     # Load positions from view
     resp = supabase.table('positions_enriched').select('*').eq('portfolio_id', portfolio_id).execute()

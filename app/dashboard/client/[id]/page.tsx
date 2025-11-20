@@ -38,6 +38,7 @@ export default function ClientDetailPremiumPage() {
   const [portfolioId, setPortfolioId] = useState<string | null>(null);
   const [scoreAlerts, setScoreAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('vue-ensemble');
   const supabase = createClient();
 
@@ -45,8 +46,9 @@ export default function ClientDetailPremiumPage() {
     loadClientData();
   }, [clientId]);
 
-  const loadClientData = async () => {
+  const loadClientData = async (attempt = 0): Promise<void> => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       // Charger le client
       const { data: clientData, error: clientError } = await supabase
@@ -117,10 +119,53 @@ export default function ClientDetailPremiumPage() {
           timeSeriesData
         });
       }
-    } catch (error) {
-      console.error('Erreur chargement client:', error);
+    } catch (error: any) {
+      // Build a robust, readable message from different error shapes we may
+      // receive: Error instances, Supabase error objects, or plain objects.
+      const asErr = error || {};
+
+      // Try several common properties used by our clients and libs
+      const maybeMsg = asErr.serverMessage || asErr.message || asErr.msg || asErr.error || null;
+
+      // If Supabase/PostgREST shaped error, it may have code/details
+      const code = asErr.code || asErr.status || null;
+      const details = asErr.details || asErr.hint || null;
+
+      const serverMessage = maybeMsg
+        || (code && details ? `${maybeMsg || 'Backend error'} (${code}: ${details})` : null)
+        || (typeof asErr === 'object' ? JSON.stringify(asErr) : String(asErr));
+
+      // Log a clear, structured error to the console so Turbopack shows useful info
+      try {
+        console.error('Erreur chargement client:', {
+          clientId,
+          serverMessage,
+          // include stack only for Error instances
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      } catch (logErr) {
+        // Fallback if structured logging fails for any reason
+        console.error('Erreur chargement client (fallback):', String(serverMessage));
+      }
+
+      // Prefer a server-provided message when available, otherwise fallback
+      const errMsg = serverMessage || 'Impossible de charger les données du client';
+
+      // Retry once for transient "Load failed" network/Turbopack issues
+      const isLoadFailed = typeof errMsg === 'string' && /load failed/i.test(errMsg);
+      if (isLoadFailed && attempt < 1) {
+        // small backoff then retry
+        setTimeout(() => loadClientData(attempt + 1), 500);
+        console.info('Retrying loadClientData after transient failure', { clientId, attempt });
+        return;
+      }
+
+      // Persist error so UI can show a retry banner (more actionable than only a toast)
+      setLoadError(errMsg || 'Impossible de charger les données du client');
+
+      // Also show a sanitized toast for quick feedback
       toast.error('Erreur', {
-        description: 'Impossible de charger les données du client'
+        description: errMsg || 'Impossible de charger les données du client'
       });
     } finally {
       setIsLoading(false);
@@ -129,10 +174,28 @@ export default function ClientDetailPremiumPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-navy-900">
+      <div className="flex items-center justify-center min-h-screen bg-[color:var(--background)]">
         <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-royal-500 mx-auto" />
+          <Loader2 className="h-12 w-12 animate-spin text-[var(--chart-2)] mx-auto" />
           <p className="text-muted-foreground">Chargement du portefeuille...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If we had a persistent load error (non-transient), show a retry banner
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[color:var(--background)] flex items-start justify-center py-12">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="p-6 rounded-2xl bg-[color:var(--card)] shadow-premium border border-[color:var(--border)]">
+            <h3 className="text-lg font-semibold mb-2">Erreur de chargement</h3>
+            <p className="text-sm text-muted-foreground mb-4">{loadError}</p>
+            <div className="flex gap-3">
+              <Button onClick={() => loadClientData(0)} variant="default">Réessayer</Button>
+              <Button onClick={() => router.push('/dashboard')} variant="ghost">Retour au dashboard</Button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -155,7 +218,7 @@ export default function ClientDetailPremiumPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-navy-950">
+    <div className="min-h-screen bg-[color:var(--background)]">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header Section */}
         <motion.div
@@ -175,13 +238,13 @@ export default function ClientDetailPremiumPage() {
 
           <div className="flex items-start justify-between mb-8">
             <div>
-              <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-[color:var(--card-foreground)] to-[color:var(--muted-foreground)] bg-clip-text text-transparent">
                 {client.first_name} {client.last_name}
               </h1>
               <div className="flex items-center gap-4 text-muted-foreground">
                 <span>{client.email || 'Pas d\'email'}</span>
                 <span>•</span>
-                <span className="px-3 py-1 rounded-full bg-royal-500/10 text-royal-400 text-sm font-medium">
+                <span className="px-3 py-1 rounded-full bg-[color:var(--chart-2)]/10 text-[color:var(--chart-2)] text-sm font-medium">
                   Profil {client.investor_profile}
                 </span>
               </div>
@@ -235,14 +298,6 @@ export default function ClientDetailPremiumPage() {
             </MetricGrid>
           )}
 
-          {/* Sprint 2: Profile / Score / Alerts */}
-          {portfolioId && (
-            <div className="grid gap-6 grid-cols-1 lg:grid-cols-3 mt-8">
-              <PortfolioInvestorProfile portfolioId={portfolioId} onUpdated={loadClientData} />
-              <PortfolioScore portfolioId={portfolioId} onAlerts={(alerts) => setScoreAlerts(alerts)} />
-              <PortfolioAlerts alerts={scoreAlerts} portfolioId={portfolioId} />
-            </div>
-          )}
         </motion.div>
 
         {/* Dashboard Content with Tabs */}

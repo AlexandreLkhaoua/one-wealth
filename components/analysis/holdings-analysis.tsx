@@ -137,7 +137,7 @@ export function HoldingsAnalysis({ positions, totalValue }: HoldingsAnalysisProp
                 onClick={() => handleSort('value')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   sortField === 'value'
-                    ? 'bg-royal-500 text-white'
+                    ? 'bg-[color:var(--chart-2)] text-white'
                     : 'bg-muted hover:bg-muted/80'
                 }`}
               >
@@ -147,7 +147,7 @@ export function HoldingsAnalysis({ positions, totalValue }: HoldingsAnalysisProp
                 onClick={() => handleSort('performance')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   sortField === 'performance'
-                    ? 'bg-royal-500 text-white'
+                    ? 'bg-[color:var(--chart-2)] text-white'
                     : 'bg-muted hover:bg-muted/80'
                 }`}
               >
@@ -157,7 +157,7 @@ export function HoldingsAnalysis({ positions, totalValue }: HoldingsAnalysisProp
                 onClick={() => handleSort('name')}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   sortField === 'name'
-                    ? 'bg-royal-500 text-white'
+                    ? 'bg-[color:var(--chart-2)] text-white'
                     : 'bg-muted hover:bg-muted/80'
                 }`}
               >

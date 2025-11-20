@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     # =====================================================
     SECRET_KEY: Optional[str] = None
     # Skip ownership checks in development (DANGEROUS - dev only!)
-    SKIP_OWNERSHIP_CHECK: bool = True
+    SKIP_OWNERSHIP_CHECK: bool = False
     
     # =====================================================
     # PYDANTIC CONFIG

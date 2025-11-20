@@ -62,13 +62,13 @@ export function NavBar() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="border-b border-border bg-[color:var(--background)]/95 backdrop-blur supports-[backdrop-filter]:bg-[color:var(--background)]/60"
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-7xl">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">O</span>
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center">
+            <span className="text-[var(--primary-foreground)] font-bold text-lg">O</span>
           </div>
           <span className="font-bold text-xl">OneWealth</span>
         </Link>
@@ -87,8 +87,8 @@ export function NavBar() {
                 className={`
                   px-4 py-2 rounded-md text-sm font-medium transition-colors
                   ${isActive 
-                    ? 'bg-secondary text-secondary-foreground' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-[var(--secondary)] text-[var(--secondary-foreground)]' 
+                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:opacity-90'
                   }
                 `}
               >
