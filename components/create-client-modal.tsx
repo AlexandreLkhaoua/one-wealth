@@ -6,23 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
+import { apiClient, formatImportErrors } from '@/lib/api/client';
 import { toast } from 'sonner';
 import { Upload, Loader2 } from 'lucide-react';
-import Papa from 'papaparse';
 
 interface CreateClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClientCreated: () => void;
-}
-
-interface PortfolioRow {
-  isin: string;
-  nom: string;
-  quantite: number;
-  prixAchat: number;
-  prixActuel: number;
-  categorie: string;
 }
 
 export function CreateClientModal({ isOpen, onClose, onClientCreated }: CreateClientModalProps) {
@@ -53,12 +44,14 @@ export function CreateClientModal({ isOpen, onClose, onClientCreated }: CreateCl
     setIsLoading(true);
 
     try {
-      // 1. Créer le client
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Utilisateur non connecté');
+      // 1. Get authenticated user and session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Utilisateur non connecté');
 
-      console.log('User ID:', user.id);
+      const user = session.user;
+      const accessToken = session.access_token;
 
+      // 2. Create client in Supabase
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .insert({
@@ -71,92 +64,66 @@ export function CreateClientModal({ isOpen, onClose, onClientCreated }: CreateCl
         .select()
         .single();
 
-      console.log('Client result:', { clientData, clientError });
-
       if (clientError) throw clientError;
       if (!clientData) throw new Error('Aucune donnée client retournée');
 
-      // 2. Parser le CSV
-      const parsedData = await new Promise<PortfolioRow[]>((resolve, reject) => {
-        Papa.parse(csvFile, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            const rows = results.data as any[];
-            const portfolioRows: PortfolioRow[] = rows.map(row => ({
-              isin: row.isin || row.ISIN || '',
-              nom: row.nom || row.Nom || row.name || row.Name || '',
-              quantite: parseFloat(row.quantite || row.Quantite || row.quantity || row.Quantity || '0'),
-              prixAchat: parseFloat(row.prixAchat || row['Prix Achat'] || row.purchasePrice || '0'),
-              prixActuel: parseFloat(row.prixActuel || row['Prix Actuel'] || row.currentPrice || '0'),
-              categorie: row.categorie || row.Categorie || row.category || row.Category || 'Non classé',
-            }));
-            resolve(portfolioRows);
-          },
-          error: (error) => reject(error),
-        });
-      });
-
-      if (parsedData.length === 0) {
-        throw new Error('Le fichier CSV est vide');
-      }
-
-      // 3. Créer le portefeuille
-      const totalValue = parsedData.reduce((sum, row) => 
-        sum + (row.quantite * row.prixActuel), 0
-      );
-
+      // 3. Create portfolio for the client
       const { data: portfolioData, error: portfolioError } = await supabase
         .from('portfolios')
         .insert({
           client_id: clientData.id,
           name: `Portefeuille ${clientName}`,
-          total_value: totalValue,
+          description: 'Portfolio principal'
         })
         .select()
         .single();
 
       if (portfolioError) throw portfolioError;
+      if (!portfolioData) throw new Error('Erreur lors de la création du portfolio');
 
-      // 4. Insérer les positions
-      const positions = parsedData.map(row => ({
-        portfolio_id: portfolioData.id,
-        isin: row.isin,
-        security_name: row.nom,
-        quantity: row.quantite,
-        purchase_price: row.prixAchat,
-        current_price: row.prixActuel,
-        current_value: row.quantite * row.prixActuel,
-        category: row.categorie,
-      }));
-
-      const { error: positionsError } = await supabase
-        .from('positions')
-        .insert(positions);
-
-      if (positionsError) throw positionsError;
-
-      // 5. Enregistrer l'import CSV
-      const { error: csvImportError } = await supabase
-        .from('csv_imports')
-        .insert({
-          portfolio_id: portfolioData.id,
-          file_name: csvFile.name,
-          row_count: parsedData.length,
-          status: 'success',
-        });
-
-      if (csvImportError) console.error('Erreur CSV import log:', csvImportError);
-
-      toast.success('Client créé !', {
-        description: `${clientName} a été ajouté avec ${parsedData.length} position${parsedData.length > 1 ? 's' : ''}`
+      // 4. Call backend API to import CSV and enrich data
+      toast.info('Import en cours...', {
+        description: 'Le fichier CSV est en cours de traitement'
       });
 
-      // Réinitialiser le formulaire
+      const importResult = await apiClient.importPortfolioCSV(
+        portfolioData.id,
+        csvFile,
+        accessToken
+      );
+
+      // 5. Show result to user
+      if (importResult.success) {
+        let description = `${importResult.rows_imported} position${importResult.rows_imported > 1 ? 's' : ''} importée${importResult.rows_imported > 1 ? 's' : ''}`;
+        
+        if (importResult.enrichment) {
+          description += `\n${importResult.enrichment.success} actif${importResult.enrichment.success > 1 ? 's' : ''} enrichi${importResult.enrichment.success > 1 ? 's' : ''}`;
+        }
+
+        if (importResult.rows_failed > 0) {
+          description += `\n⚠️ ${importResult.rows_failed} ligne${importResult.rows_failed > 1 ? 's' : ''} en erreur`;
+        }
+
+        toast.success('Client créé avec succès !', {
+          description: description
+        });
+
+        // Show errors if any (non-blocking)
+        if (importResult.errors.length > 0) {
+          console.warn('Import errors:', importResult.errors);
+          toast.warning('Quelques erreurs détectées', {
+            description: formatImportErrors(importResult.errors)
+          });
+        }
+      } else {
+        throw new Error('Import failed');
+      }
+
+      // 6. Reset form and refresh
       setClientName('');
       setCsvFile(null);
-      
       onClientCreated();
+      
     } catch (error: any) {
       console.error('Erreur création client:', error);
       
@@ -220,7 +187,7 @@ export function CreateClientModal({ isOpen, onClose, onClientCreated }: CreateCl
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Colonnes attendues : isin, nom, quantite, prixAchat, prixActuel, categorie
+                Format attendu : date,provider,asset_class,instrument_name,isin,region,currency,current_value
               </p>
             </div>
           </div>

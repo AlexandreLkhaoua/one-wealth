@@ -1,6 +1,6 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# OneWealth - .gitignore
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +10,57 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# Backend Python
+/backend/venv
+/backend/__pycache__
+/backend/*.pyc
+/backend/.pytest_cache
+/backend/logs/*.log
 
-# next.js
+# Testing
+/coverage
+.pytest_cache
+
+# Next.js
 /.next/
 /out/
-
-# production
 /build
 
-# misc
-.DS_Store
-*.pem
+# Environment Variables
+.env
+.env.*
+!.env.example
 
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+/tmp/*.log
 
-# env files (can opt-in for committing if needed)
-.env*
+# OS Files
+.DS_Store
+*.pem
+Thumbs.db
 
-# vercel
-.vercel
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Vercel
+.vercel
+
+# Backup Files
+*.backup
+*.bak
+*-backup.*
+
+# CSV Data (except examples)
+*.csv
+!portfolio-complet.csv

@@ -39,6 +39,17 @@ export function PortfolioTable({ positions }: PortfolioTableProps) {
     }
   };
 
+  const formatPercentage = (value?: number) => {
+    if (value === undefined || value === null) return '—';
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
+  };
+
+  const getPerformanceColor = (value?: number) => {
+    if (value === undefined || value === null) return 'text-muted-foreground';
+    return value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -53,29 +64,33 @@ export function PortfolioTable({ positions }: PortfolioTableProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Établissement</TableHead>
                   <TableHead>Instrument</TableHead>
+                  <TableHead>Secteur</TableHead>
                   <TableHead>Classe d'actif</TableHead>
                   <TableHead>Région</TableHead>
                   <TableHead>ISIN</TableHead>
+                  <TableHead className="text-right">Prix</TableHead>
+                  <TableHead className="text-right">Perf 1 an</TableHead>
+                  <TableHead className="text-right">Volatilité</TableHead>
                   <TableHead className="text-right">Valeur (EUR)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {positions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center text-muted-foreground">
                       Aucune position à afficher
                     </TableCell>
                   </TableRow>
                 ) : (
                   positions.map((position, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={position.id || index}>
                       <TableCell className="font-medium">
                         {formatDate(position.date)}
                       </TableCell>
@@ -84,13 +99,34 @@ export function PortfolioTable({ positions }: PortfolioTableProps) {
                         {position.instrument_name}
                       </TableCell>
                       <TableCell>
+                        {position.asset?.sector ? (
+                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {position.asset.sector}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
                           {position.asset_class}
                         </span>
                       </TableCell>
-                      <TableCell>{position.region}</TableCell>
+                      <TableCell>{position.asset?.region || position.region}</TableCell>
                       <TableCell className="font-mono text-sm text-muted-foreground">
                         {position.isin || '—'}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {position.asset?.last_price ? 
+                          formatCurrency(position.asset.last_price) : 
+                          <span className="text-muted-foreground">—</span>
+                        }
+                      </TableCell>
+                      <TableCell className={`text-right font-medium ${getPerformanceColor(position.asset?.perf_1y)}`}>
+                        {formatPercentage(position.asset?.perf_1y)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatPercentage(position.asset?.volatility_1y)}
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(position.current_value)}

@@ -1,0 +1,39 @@
+# =====================================================
+# ONEWEALTH BACKEND - DEPENDENCIES
+# =====================================================
+
+# FastAPI framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# Database - Supabase client (version plus récente pour compatibilité)
+supabase>=2.7,<3.0
+
+# Data validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# File handling
+python-multipart==0.0.6
+
+# Market data APIs
+yfinance==0.2.35
+
+# Data processing
+pandas==2.2.0
+numpy==1.26.3
+
+# HTTP requests (géré automatiquement par supabase)
+# httpx sera installé via les dépendances de supabase
+
+# Environment variables
+python-dotenv==1.0.0
+
+# CORS
+python-jose[cryptography]==3.3.0
+
+# Logging & monitoring (optional)
+python-json-logger==2.0.7
+
+# Date/time utilities
+python-dateutil==2.8.2
