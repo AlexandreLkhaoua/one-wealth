@@ -33,6 +33,26 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _safe_int(val, default: int):
+    """Convert to int safely: return default if val is None or invalid."""
+    try:
+        if val is None:
+            return default
+        return int(val)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_float(val, default: float):
+    """Convert to float safely: return default if val is None or invalid."""
+    try:
+        if val is None:
+            return float(default)
+        return float(val)
+    except (TypeError, ValueError):
+        return float(default)
+
+
 def get_supabase_dependency():
     """Dependency for Supabase client"""
     return get_supabase()
@@ -450,10 +470,10 @@ async def get_portfolio_profile_endpoint(
             raise HTTPException(status_code=404, detail=f"Portfolio {portfolio_id} not found")
 
         return InvestorProfileResponse(
-            investor_profile=portfolio.get('investor_profile', 'equilibre'),
-            target_equity_pct=float(portfolio.get('target_equity_pct', 60.0)),
-            investment_horizon_years=int(portfolio.get('investment_horizon_years', 10)),
-            objective=portfolio.get('objective', 'croissance')
+            investor_profile=(portfolio.get('investor_profile') or 'equilibre'),
+            target_equity_pct=_safe_float(portfolio.get('target_equity_pct'), 60.0),
+            investment_horizon_years=_safe_int(portfolio.get('investment_horizon_years'), 10),
+            objective=(portfolio.get('objective') or 'croissance')
         )
 
     except PermissionError:
@@ -508,10 +528,10 @@ async def patch_portfolio_profile_endpoint(
         )
 
         return InvestorProfileResponse(
-            investor_profile=updated.get('investor_profile', 'equilibre'),
-            target_equity_pct=float(updated.get('target_equity_pct', 60.0)),
-            investment_horizon_years=int(updated.get('investment_horizon_years', 10)),
-            objective=updated.get('objective', 'croissance')
+            investor_profile=(updated.get('investor_profile') or 'equilibre'),
+            target_equity_pct=_safe_float(updated.get('target_equity_pct'), 60.0),
+            investment_horizon_years=_safe_int(updated.get('investment_horizon_years'), 10),
+            objective=(updated.get('objective') or 'croissance')
         )
 
     except PermissionError:

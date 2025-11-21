@@ -154,7 +154,7 @@ export function AllocationAnalysis({
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-royal-500 transition-all duration-500"
+                      className="h-full bg-[color:var(--chart-2)] transition-all duration-500"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -182,7 +182,7 @@ export function AllocationAnalysis({
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-royal-500 to-royal-400"
+                      className="h-full bg-gradient-to-r from-[color:var(--chart-2)] to-[color:var(--chart-2)]/80"
                       style={{ width: `${item.percentage}%` }}
                     />
                   </div>

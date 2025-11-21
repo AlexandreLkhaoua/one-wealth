@@ -8,19 +8,19 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
+          'border-transparent bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'border-transparent bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90',
         success:
-          'border-transparent bg-success-500/10 text-success-700 dark:text-success-500 ring-1 ring-success-500/20',
+          'border-transparent bg-[var(--chart-5)]/10 text-[var(--chart-5)] ring-1 ring-[color:var(--chart-5)]/20',
         warning:
-          'border-transparent bg-warning-500/10 text-warning-700 dark:text-warning-500 ring-1 ring-warning-500/20',
+          'border-transparent bg-[var(--accent)]/10 text-[var(--accent)] ring-1 ring-[color:var(--accent)]/20',
         danger:
-          'border-transparent bg-danger-500/10 text-danger-700 dark:text-danger-500 ring-1 ring-danger-500/20',
-        outline: 'text-foreground border-border',
+          'border-transparent bg-[var(--destructive)]/10 text-[var(--destructive)] ring-1 ring-[color:var(--destructive)]/20',
+        outline: 'text-[var(--foreground)] border-[var(--border)]',
         glass:
-          'glass-effect text-foreground border-white/10',
-        glow: 'border-royal-500 bg-royal-500/20 text-royal-400 shadow-glow',
+          'glass-effect text-[var(--foreground)] border-white/10',
+        glow: 'border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent-foreground)] shadow-glow',
       },
     },
     defaultVariants: {

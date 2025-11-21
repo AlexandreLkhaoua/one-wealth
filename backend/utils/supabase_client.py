@@ -42,10 +42,43 @@ def get_supabase_client() -> Client:
     logger.debug(f"Creating Supabase client for URL: {settings.SUPABASE_URL}")
     
     try:
-        client = create_client(
-            supabase_url=settings.SUPABASE_URL,
-            supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY
-        )
+        try:
+            client = create_client(
+                supabase_url=settings.SUPABASE_URL,
+                supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY
+            )
+        except TypeError as te:
+            # Compatibility shim: some versions of the supabase/httpx stack may pass
+            # a `proxy` kw to httpx.Client which isn't accepted by certain httpx
+            # versions. Detect that specific error and patch httpx.Client.__init__ to
+            # accept `proxy` (map to `proxies`) then retry client creation.
+            if "unexpected keyword argument 'proxy'" in str(te):
+                try:
+                    import httpx
+
+                    orig_init = httpx.Client.__init__
+
+                    def _patched_init(self, *args, **kwargs):
+                        if 'proxy' in kwargs:
+                            proxy_val = kwargs.pop('proxy')
+                            # map to proxies if not already provided
+                            if 'proxies' not in kwargs:
+                                kwargs['proxies'] = proxy_val
+                        return orig_init(self, *args, **kwargs)
+
+                    httpx.Client.__init__ = _patched_init
+                    logger.warning("Applied httpx.Client.__init__ compatibility shim for 'proxy' kw")
+
+                    # retry creating the supabase client
+                    client = create_client(
+                        supabase_url=settings.SUPABASE_URL,
+                        supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY
+                    )
+                except Exception as e2:
+                    logger.error(f"Compatibility retry failed: {e2}")
+                    raise
+            else:
+                raise
         
         logger.info("✅ Supabase client initialized successfully")
         return client
@@ -74,8 +107,11 @@ def get_supabase() -> Client:
     return get_supabase_client()
 
 
-# Convenience export
-supabase = get_supabase()
+# NOTE: Do NOT create a global supabase client at import time.
+# Creating the client eagerly (at import) can cause network calls and
+# configuration/credential errors during test collection. Use `get_supabase()`
+# where needed or override the dependency in tests.
+supabase = None
 
 
 # =====================================================

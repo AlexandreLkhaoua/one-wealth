@@ -44,20 +44,20 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-effect-strong rounded-xl p-4 shadow-premium border border-royal-500/20"
+      className="glass-effect-strong rounded-xl p-4 shadow-premium border border-[color:var(--chart-2)]/20"
       >
-        <p className="font-semibold text-white mb-2">{data.date}</p>
+        <p className="font-semibold text-[color:var(--card-foreground)] mb-2">{data.date}</p>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-gray-400">Valeur</span>
-            <span className="text-sm font-bold text-royal-400">
+            <span className="text-sm text-[color:var(--muted-foreground)]">Valeur</span>
+            <span className="text-sm font-bold text-[color:var(--chart-2)]">
               {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.value)}
             </span>
           </div>
           {data.change !== undefined && Math.abs(data.change) > 0.01 && (
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-gray-400">Variation</span>
-              <span className={`text-sm font-semibold ${data.change >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm text-[color:var(--muted-foreground)]">Variation</span>
+          <span className={`text-sm font-semibold ${data.change >= 0 ? 'text-success-500' : 'text-danger-500'}`}>
                 {data.change >= 0 ? '+' : ''}{data.change.toFixed(2)}%
               </span>
             </div>
@@ -76,19 +76,19 @@ const CustomPieTooltip = ({ active, payload }: { active?: boolean; payload?: any
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-effect-strong rounded-xl p-4 shadow-premium border border-royal-500/20"
+        className="glass-effect-strong rounded-xl p-4 shadow-premium border border-[color:var(--chart-2)]/20"
       >
-        <p className="font-semibold text-white mb-2">{data.name}</p>
+  <p className="font-semibold text-[color:var(--card-foreground)] mb-2">{data.name}</p>
         <div className="space-y-1">
+              <div className="flex items-center justify-between gap-4">
+              <span className="text-sm text-[color:var(--muted-foreground)]">Valeur</span>
+              <span className="text-sm font-bold text-[color:var(--chart-2)]">
+                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.value)}
+              </span>
+            </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-gray-400">Valeur</span>
-            <span className="text-sm font-bold text-royal-400">
-              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data.value)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm text-gray-400">Proportion</span>
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm text-[color:var(--muted-foreground)]">Proportion</span>
+            <span className="text-sm font-semibold text-[color:var(--card-foreground)]">
               {data.percentage.toFixed(1)}%
             </span>
           </div>
@@ -175,9 +175,9 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
         {/* Performance totale */}
         <Card variant="glass" glow className="p-6 group hover:scale-[1.02] transition-transform duration-300">
           <div className="flex items-start justify-between mb-4">
-            <div className="p-3 rounded-xl bg-royal-500/20 group-hover:bg-royal-500/30 transition-colors">
+              <div className="p-3 rounded-xl bg-[color:var(--chart-2)]/20 group-hover:bg-[color:var(--chart-2)]/30 transition-colors">
               {isPositiveGain ? (
-                <TrendingUp className="w-6 h-6 text-royal-400" />
+                <TrendingUp className="w-6 h-6 text-[color:var(--chart-2)]" />
               ) : (
                 <TrendingDown className="w-6 h-6 text-danger-400" />
               )}
@@ -187,14 +187,14 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
             </Badge>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Performance Totale</p>
+            <p className="text-sm text-[color:var(--muted-foreground)] mb-1">Performance Totale</p>
             <div className="flex items-baseline gap-2">
               <AnimatedCurrency
                 value={totalGain}
                 className={`text-2xl font-bold ${isPositiveGain ? 'text-success-500' : 'text-danger-500'}`}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[color:var(--muted-foreground)] mt-1">
               Depuis {timeSeriesData[0]?.date || 'le début'}
             </p>
           </div>
@@ -212,8 +212,8 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-gray-400 mb-1">Allocation Principale</p>
-              <p className="text-xl font-bold text-white mb-1">{topAssetClass.name}</p>
+              <p className="text-sm text-[color:var(--muted-foreground)] mb-1">Allocation Principale</p>
+              <p className="text-xl font-bold text-[color:var(--card-foreground)] mb-1">{topAssetClass.name}</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
                   <motion.div
@@ -223,7 +223,7 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
                     className="h-full bg-gradient-to-r from-purple-500 to-purple-600"
                   />
                 </div>
-                <span className="text-sm font-semibold text-purple-400">
+                <span className="text-sm font-semibold text-[color:var(--chart-4)]">
                   {topAssetClass.percentage.toFixed(1)}%
                 </span>
               </div>
@@ -243,8 +243,8 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-gray-400 mb-1">Exposition Géographique</p>
-              <p className="text-xl font-bold text-white mb-1">{topRegion.name}</p>
+              <p className="text-sm text-[color:var(--muted-foreground)] mb-1">Exposition Géographique</p>
+              <p className="text-xl font-bold text-[color:var(--card-foreground)] mb-1">{topRegion.name}</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
                   <motion.div
@@ -254,7 +254,7 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
                     className="h-full bg-gradient-to-r from-teal-500 to-teal-600"
                   />
                 </div>
-                <span className="text-sm font-semibold text-teal-400">
+                <span className="text-sm font-semibold text-[color:var(--chart-2)]">
                   {topRegion.percentage.toFixed(1)}%
                 </span>
               </div>
@@ -274,7 +274,7 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-2xl">
-                  <Activity className="w-6 h-6 text-royal-500" />
+                  <Activity className="w-6 h-6 text-[color:var(--chart-2)]" />
                   Évolution du Portefeuille
                 </CardTitle>
                 <CardDescription className="mt-2">
@@ -377,20 +377,20 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 + index * 0.1 }}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-[color:var(--muted)]/6 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
-                      <span className="text-sm text-gray-300">{item.name}</span>
+                      <span className="text-sm text-[color:var(--muted-foreground)]">{item.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-[color:var(--card-foreground)]">
                         {formatCompactCurrency(item.value)}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-[color:var(--muted-foreground)]">
                         ({item.percentage.toFixed(1)}%)
                       </span>
                     </div>
@@ -451,20 +451,20 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 + index * 0.1 }}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors"
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-[color:var(--muted)]/6 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
-                      <span className="text-sm text-gray-300">{item.name}</span>
+                      <span className="text-sm text-[color:var(--muted-foreground)]">{item.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-[color:var(--card-foreground)]">
                         {formatCompactCurrency(item.value)}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-[color:var(--muted-foreground)]">
                         ({item.percentage.toFixed(1)}%)
                       </span>
                     </div>
@@ -481,7 +481,7 @@ export function PortfolioCharts({ summary }: PortfolioChartsProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="flex items-center justify-center gap-2 text-sm text-gray-500 pt-4"
+        className="flex items-center justify-center gap-2 text-sm text-[color:var(--muted-foreground)] pt-4"
       >
         <Award className="w-4 h-4" />
         <span>Analyse premium • Données actualisées en temps réel</span>
